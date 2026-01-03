@@ -46,5 +46,16 @@ def create_task():
     tasks.append(task)
     return jsonify(task), 201
 
+# 3. Получить одну задачу по ID
+@app.route('/tasks/<int:task_id>', methods=['GET'])
+def get_task(task_id):
+    # Ищем задачу в списке (генератор списков)
+    task = next((t for t in tasks if t['id'] == task_id), None)
+    
+    if task is None:
+        return jsonify({"error": "Task not found"}), 404
+        
+    return jsonify(task), 200
+
 if __name__ == '__main__':
     app.run(debug=True)
