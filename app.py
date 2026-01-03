@@ -75,5 +75,14 @@ def update_task(task_id):
     
     return jsonify(task), 200
 
+# 5. Удалить задачу по ID
+@app.route('/tasks/<int:task_id>', methods=['DELETE'])
+def delete_task(task_id):
+    global tasks
+    # Оставляем в списке только те задачи, у которых ID НЕ совпадает с переданным
+    tasks = [t for t in tasks if t['id'] != task_id]
+    
+    return jsonify({"result": True}), 200
+
 if __name__ == '__main__':
     app.run(debug=True)
