@@ -27,5 +27,24 @@ def home():
 def get_tasks():
     return jsonify(tasks), 200
 
+# 2. Создать новую задачу
+@app.route('/tasks', methods=['POST'])
+def create_task():
+    if not request.json or 'title' not in request.json:
+        return jsonify({"error": "Title is required"}), 400
+    
+    # Генерируем новый ID (берем последний + 1, или 1 если список пуст)
+    new_id = tasks[-1]['id'] + 1 if tasks else 1
+    
+    task = {
+        "id": new_id,
+        "title": request.json['title'],
+        "description": request.json.get('description', ""),
+        "status": request.json.get('status', "todo")
+    }
+    
+    tasks.append(task)
+    return jsonify(task), 201
+
 if __name__ == '__main__':
     app.run(debug=True)
