@@ -57,5 +57,23 @@ def get_task(task_id):
         
     return jsonify(task), 200
 
+# 4. Обновить задачу по ID
+@app.route('/tasks/<int:task_id>', methods=['PUT'])
+def update_task(task_id):
+    task = next((t for t in tasks if t['id'] == task_id), None)
+    
+    if task is None:
+        return jsonify({"error": "Task not found"}), 404
+    
+    if not request.json:
+        return jsonify({"error": "Bad request"}), 400
+
+    # Обновляем поля, если они есть в запросе, иначе оставляем старые
+    task['title'] = request.json.get('title', task['title'])
+    task['description'] = request.json.get('description', task['description'])
+    task['status'] = request.json.get('status', task['status'])
+    
+    return jsonify(task), 200
+
 if __name__ == '__main__':
     app.run(debug=True)
