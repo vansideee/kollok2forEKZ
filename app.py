@@ -1,8 +1,8 @@
-from flask import Flask, jsonify, request # добавили request
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
-# Имитация БД в памяти
+# --- База данных в памяти ---
 tasks = [
     {
         "id": 1,
@@ -13,14 +13,14 @@ tasks = [
     {
         "id": 2,
         "title": "Запустить API",
-        "description": "Сделать первый запрос",
+        "description": "Проверить, что все работает",
         "status": "in_progress"
     }
 ]
 
 @app.route('/')
 def home():
-    return "To-Do List API is running!"
+    return "To-Do List API is running!", 200
 
 # 1. Получить список всех задач
 @app.route('/tasks', methods=['GET'])
@@ -30,11 +30,20 @@ def get_tasks():
 # 2. Создать новую задачу
 @app.route('/tasks', methods=['POST'])
 def create_task():
+    # Проверка данных
     if not request.json or 'title' not in request.json:
         return jsonify({"error": "Title is required"}), 400
     
-    # Генерируем новый ID (берем последний + 1, или 1 если список пуст)
-    new_id = tasks[-1]['id'] + 1 if tasks else 1
+    #  Генерация ID
+    
+    new_id = 0
+    if len(tasks) > 0:
+        # Берем последнюю задачу из списка
+        last_task = tasks[-1]
+        new_id = last_task['id'] + 1
+    else:
+        # Если список пустой, то ID будет 1
+        new_id = 1
     
     task = {
         "id": new_id,
@@ -49,38 +58,60 @@ def create_task():
 # 3. Получить одну задачу по ID
 @app.route('/tasks/<int:task_id>', methods=['GET'])
 def get_task(task_id):
-    # Ищем задачу в списке (генератор списков)
-    task = next((t for t in tasks if t['id'] == task_id), None)
+   
+    task_found = None
     
-    if task is None:
+    # Проходим по каждой задаче в списке
+    for t in tasks:
+        if t['id'] == task_id:
+            task_found = t
+            break  
+    
+    if task_found is None:
         return jsonify({"error": "Task not found"}), 404
         
-    return jsonify(task), 200
+    return jsonify(task_found), 200
 
-# 4. Обновить задачу по ID
+# 4. Обновить задачу
 @app.route('/tasks/<int:task_id>', methods=['PUT'])
 def update_task(task_id):
-    task = next((t for t in tasks if t['id'] == task_id), None)
     
-    if task is None:
+    task_found = None
+    for t in tasks:
+        if t['id'] == task_id:
+            task_found = t
+            break
+
+    if task_found is None:
         return jsonify({"error": "Task not found"}), 404
     
     if not request.json:
         return jsonify({"error": "Bad request"}), 400
 
-    # Обновляем поля, если они есть в запросе, иначе оставляем старые
-    task['title'] = request.json.get('title', task['title'])
-    task['description'] = request.json.get('description', task['description'])
-    task['status'] = request.json.get('status', task['status'])
+  
+    task_found['title'] = request.json.get('title', task_found['title'])
+    task_found['description'] = request.json.get('description', task_found['description'])
+    task_found['status'] = request.json.get('status', task_found['status'])
     
-    return jsonify(task), 200
+    return jsonify(task_found), 200
 
-# 5. Удалить задачу по ID
+# 5. Удалить задачу
 @app.route('/tasks/<int:task_id>', methods=['DELETE'])
 def delete_task(task_id):
-    global tasks
-    # Оставляем в списке только те задачи, у которых ID НЕ совпадает с переданным
-    tasks = [t for t in tasks if t['id'] != task_id]
+   
+    task_to_delete = None
+    
+    # Сначала ищем задачу, которую надо удалить
+    for t in tasks:
+        if t['id'] == task_id:
+            task_to_delete = t
+            break
+            
+    if task_to_delete is None:
+        return jsonify({"error": "Task not found"}), 404
+
+   
+    tasks.remove(task_to_delete)
     
     return jsonify({"result": True}), 200
 
